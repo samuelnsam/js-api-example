@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "install": "^0.13.0",
+    "npm": "^10.8.3"
+  },
+  "type": "module",
+  "main": "example.js",
+  "scripts": {
+    "start": "node example.js"
+  }
+}
