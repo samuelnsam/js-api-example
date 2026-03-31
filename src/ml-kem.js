@@ -50,3 +50,37 @@ export async function decaps(privateKey, cipher) {
 
     return decaps.shared_key
 }
+
+
+export async function sign(data) {
+    const body = JSON.stringify({
+        data: data
+    })
+    const signing = await fetch(`${endpoint}/api/signature/sign`, {
+        method: 'POST',
+        headers: header,
+        body: body
+    }).then((data) => data.json())
+
+    return { 
+        pk: signing.pk,
+        sk: signing.sk,
+        signature: signing.signature
+    }
+}
+
+export async function verify(data, pk, signature) {
+    const body = JSON.stringify({
+        data: data,
+        pk: pk,
+        signature: signature
+    })
+    const verif = await fetch(`${endpoint}/api/signature/verify`, {
+        method: 'POST',
+        headers: header,
+        body: body
+    }).then((data) => data.json())
+
+    return verif.verified
+}
+
