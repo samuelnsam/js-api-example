@@ -1,86 +1,73 @@
-
 const AUTH_TOKEN = process.env.AUTH_TOKEN
-const endpoint = 'https://api.exequantum.com'
-
-const header = {
-    'Authorization': 'bearer ' + AUTH_TOKEN,
+const endpoint = 'https://api.eqcore.io'
+const headers = {
+    'Authorization': 'Bearer ' + AUTH_TOKEN,
     'Content-Type': 'application/json'
 }
 
-export async function keyGen() {
-    const keys = await fetch(`${endpoint}/api/kem/generate_keys`, {
-        headers: header
-    }).then((data) => data.json())
+// ── KEM ──────────────────────────────────────────────────
+
+export async function kemGenerateKeys(algorithm = 'ML-KEM-768') {
+    const res = await fetch(`${endpoint}/api/v1/pqc/kem/generate-keys/`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ algorithm })
+    }).then(r => r.json())
     return {
-        privateKey: keys.sk,
-        publicKey: keys.pk,
-        verificationSignature: keys.signature,
-        verificationKey: keys.verification_key
+        publicKey: res.public_key,
+        secretKey: res.secret_key
     }
 }
 
-export async function encaps(publicKey, verifKey, signature) {
-    const body = JSON.stringify({
-        pk: publicKey,
-        verification_key: verifKey,
-        signature: signature
-    })
-    const encaps = await fetch(`${endpoint}/api/kem/encapsulate_key`, {
+export async function kemEncapsulate(publicKey, algorithm = 'ML-KEM-768') {
+    const res = await fetch(`${endpoint}/api/v1/pqc/kem/encapsulate/`, {
         method: 'POST',
-        headers: header,
-        body: body
-    }).then((data) => data.json())
-
-    return { 
-        shared_key: encaps.shared_key,
-        cipher: encaps.cipher
+        headers,
+        body: JSON.stringify({ algorithm, public_key: publicKey })
+    }).then(r => r.json())
+    return {
+        sharedSecret: res.shared_secret,
+        ciphertext: res.ciphertext
     }
 }
 
-export async function decaps(privateKey, cipher) {
-    const body = JSON.stringify({
-        sk: privateKey,
-        cipher: cipher
-    })
-    const decaps = await fetch(`${endpoint}/api/kem/decapsulate_key`, {
+export async function kemDecapsulate(secretKey, ciphertext, algorithm = 'ML-KEM-768') {
+    const res = await fetch(`${endpoint}/api/v1/pqc/kem/decapsulate/`, {
         method: 'POST',
-        headers: header,
-        body: body
-    }).then((data) => data.json())
-
-    return decaps.shared_key
+        headers,
+        body: JSON.stringify({ algorithm, secret_key: secretKey, ciphertext })
+    }).then(r => r.json())
+    return res.shared_secret
 }
 
+// ── DSA ──────────────────────────────────────────────────
 
-export async function sign(data) {
-    const body = JSON.stringify({
-        data: data
-    })
-    const signing = await fetch(`${endpoint}/api/signature/sign`, {
+export async function dsaGenerateKeys(algorithm = 'ML-DSA-65') {
+    const res = await fetch(`${endpoint}/api/v1/pqc/dsa/generate-keys/`, {
         method: 'POST',
-        headers: header,
-        body: body
-    }).then((data) => data.json())
-
-    return { 
-        pk: signing.pk,
-        sk: signing.sk,
-        signature: signing.signature
+        headers,
+        body: JSON.stringify({ algorithm })
+    }).then(r => r.json())
+    return {
+        publicKey: res.public_key,
+        secretKey: res.secret_key
     }
 }
 
-export async function verify(data, pk, signature) {
-    const body = JSON.stringify({
-        data: data,
-        pk: pk,
-        signature: signature
-    })
-    const verif = await fetch(`${endpoint}/api/signature/verify`, {
+export async function dsaSign(secretKey, message, algorithm = 'ML-DSA-65') {
+    const res = await fetch(`${endpoint}/api/v1/pqc/dsa/sign/`, {
         method: 'POST',
-        headers: header,
-        body: body
-    }).then((data) => data.json())
-
-    return verif.verified
+        headers,
+        body: JSON.stringify({ algorithm, secret_key: secretKey, message })
+    }).then(r => r.json())
+    return res.signature
 }
 
+export async function dsaVerify(publicKey, message, signature, algorithm = 'ML-DSA-65') {
+    const res = await fetch(`${endpoint}/api/v1/pqc/dsa/verify/`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ algorithm, public_key: publicKey, message, signature })
+    }).then(r => r.json())
+    return res.verified
+}
