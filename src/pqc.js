@@ -14,16 +14,16 @@ export async function kemGenerateKeys(algorithm = 'ML-KEM-768') {
         body: JSON.stringify({ algorithm })
     }).then(r => r.json())
     return {
-        publicKey: res.public_key,
-        secretKey: res.secret_key
+        encapsulationKey: res.encapsulation_key,
+        decapsulationKey: res.decapsulation_key
     }
 }
 
-export async function kemEncapsulate(publicKey, algorithm = 'ML-KEM-768') {
+export async function kemEncapsulate(encapsulationKey, algorithm = 'ML-KEM-768') {
     const res = await fetch(`${endpoint}/api/v1/pqc/kem/encapsulate/`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ algorithm, public_key: publicKey })
+        body: JSON.stringify({ algorithm, encapsulation_key: encapsulationKey })
     }).then(r => r.json())
     return {
         sharedSecret: res.shared_secret,
@@ -31,11 +31,11 @@ export async function kemEncapsulate(publicKey, algorithm = 'ML-KEM-768') {
     }
 }
 
-export async function kemDecapsulate(secretKey, ciphertext, algorithm = 'ML-KEM-768') {
+export async function kemDecapsulate(decapsulationKey, ciphertext, algorithm = 'ML-KEM-768') {
     const res = await fetch(`${endpoint}/api/v1/pqc/kem/decapsulate/`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ algorithm, secret_key: secretKey, ciphertext })
+        body: JSON.stringify({ algorithm, decapsulation_key: decapsulationKey, ciphertext })
     }).then(r => r.json())
     return res.shared_secret
 }
@@ -43,7 +43,7 @@ export async function kemDecapsulate(secretKey, ciphertext, algorithm = 'ML-KEM-
 // ── DSA ──────────────────────────────────────────────────
 
 export async function dsaGenerateKeys(algorithm = 'ML-DSA-65') {
-    const res = await fetch(`${endpoint}/api/v1/pqc/dsa/generate-keys/`, {
+    const res = await fetch(`${endpoint}/api/v1/pqc/sign/generate-keys/`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ algorithm })
@@ -55,7 +55,7 @@ export async function dsaGenerateKeys(algorithm = 'ML-DSA-65') {
 }
 
 export async function dsaSign(secretKey, message, algorithm = 'ML-DSA-65') {
-    const res = await fetch(`${endpoint}/api/v1/pqc/dsa/sign/`, {
+    const res = await fetch(`${endpoint}/api/v1/pqc/sign/sign/`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ algorithm, secret_key: secretKey, message })
@@ -64,10 +64,10 @@ export async function dsaSign(secretKey, message, algorithm = 'ML-DSA-65') {
 }
 
 export async function dsaVerify(publicKey, message, signature, algorithm = 'ML-DSA-65') {
-    const res = await fetch(`${endpoint}/api/v1/pqc/dsa/verify/`, {
+    const res = await fetch(`${endpoint}/api/v1/pqc/sign/verify/`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ algorithm, public_key: publicKey, message, signature })
     }).then(r => r.json())
-    return res.verified
+    return res.valid
 }

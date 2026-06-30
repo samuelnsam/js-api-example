@@ -10,8 +10,8 @@ const main = async () => {
 
     // 1. KEM: establish shared secret
     const kem = await kemGenerateKeys()
-    const { sharedSecret: ss1, ciphertext } = await kemEncapsulate(kem.publicKey)
-    const ss2 = await kemDecapsulate(kem.secretKey, ciphertext)
+    const { sharedSecret: ss1, ciphertext } = await kemEncapsulate(kem.encapsulationKey)
+    const ss2 = await kemDecapsulate(kem.decapsulationKey, ciphertext)
     console.log('Shared secrets match:', ss1 === ss2)
 
     // 2. KDF: derive AES key (never use raw shared secret directly)
@@ -30,8 +30,8 @@ const main = async () => {
     // 5. DSA: sign and verify
     const dsa = await dsaGenerateKeys()
     const signature = await dsaSign(dsa.secretKey, message)
-    const verified = await dsaVerify(dsa.publicKey, message, signature)
-    console.log('Signature valid:', verified)
+    const valid = await dsaVerify(dsa.publicKey, message, signature)
+    console.log('Signature valid:', valid)
 }
 
 main()
