@@ -1,21 +1,37 @@
+// main.js
 
-import { keyGen, encaps, decaps } from "./src/ml-kem.js";
-import { decryptAES, encryptAES } from './src/aesFuncs.js'
+import {
+    kemGenerateKeys, kemEncapsulate, kemDecapsulate,
+    dsaGenerateKeys, dsaSign, dsaVerify
+} from './src/pqc.js'
+import { deriveKey, encrypt, decrypt } from './src/crypto.js'
 
-const main = async() => {
-    const keys = await keyGen()
-    const _encaps = await encaps(keys.publicKey, keys.verificationKey, keys.verificationSignature)
-    const Ss1 = _encaps.shared_key
-    console.log(Ss1)
+const main = async () => {
 
-    const Ss2 = await decaps(keys.privateKey, _encaps.cipher)
-    console.log(Ss2 == Ss1)
+    // 1. KEM: establish shared secret
+    const kem = await kemGenerateKeys()
+    const { sharedSecret: ss1, ciphertext } = await kemEncapsulate(kem.publicKey)
+    const ss2 = await kemDecapsulate(kem.secretKey, ciphertext)
+    console.log('Shared secrets match:', ss1 === ss2)
 
-    const message = 'hello'
-    var encrypted = await encryptAES(message, Ss1)
-    console.log(encrypted)
-    var decrypted = await(decryptAES(encrypted.encryptedData, encrypted.iv, Ss2))
-    console.log(decrypted)
+    // 2. KDF: derive AES key (never use raw shared secret directly)
+    const senderKey = await deriveKey(ss1)
+    const recipientKey = await deriveKey(ss2)
+
+    // 3. Encrypt
+    const message = 'hello from post-quantum land'
+    const { iv, ciphertext: encrypted } = await encrypt(message, senderKey)
+    console.log('Encrypted:', encrypted)
+
+    // 4. Decrypt
+    const decrypted = await decrypt(encrypted, iv, recipientKey)
+    console.log('Decrypted:', decrypted)
+
+    // 5. DSA: sign and verify
+    const dsa = await dsaGenerateKeys()
+    const signature = await dsaSign(dsa.secretKey, message)
+    const verified = await dsaVerify(dsa.publicKey, message, signature)
+    console.log('Signature valid:', verified)
 }
 
 main()
